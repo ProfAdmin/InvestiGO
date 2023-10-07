@@ -2,7 +2,7 @@ pr:
   autoCancel: false
   branches:
     include:
-    - develop
+    - main
   drafts: false
 
 pool: 'Default'
