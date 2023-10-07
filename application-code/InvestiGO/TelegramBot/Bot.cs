@@ -22,7 +22,7 @@ public class Bot
     public void Start()
     {
         // check every 10 seconds
-        var timer = new Timer(CheckForUpdates, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+        var timer = new Timer(CheckForUpdates!, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
     }
 
     private async void CheckForUpdates(object state)
@@ -35,6 +35,7 @@ public class Bot
             {
                 var messageRecord = new MessageRecord
                 {
+                    Id = Guid.NewGuid(),
                     ChatId = update.Message.Chat.Id,
                     MessageId = update.Message.MessageId,
                     Text = update.Message.Text,
@@ -43,9 +44,7 @@ public class Bot
                     SenderUsername = update.Message.SenderChat?.Username ?? string.Empty,
                     SenderType = update.Message.SenderChat?.Type ?? null
                 };
-
-                Console.WriteLine(update.Message.Text);
-
+                
                 _dbContext.Messages.Add(messageRecord);
                 await _dbContext.SaveChangesAsync();
             }

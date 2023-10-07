@@ -1,15 +1,15 @@
+using Microsoft.EntityFrameworkCore;
 using TelegramBot.Models;
 
-namespace TelegramBot.Data;
-
-using Microsoft.EntityFrameworkCore;
-
-public class AppDbContext : DbContext
+namespace TelegramBot.Data
 {
-    public DbSet<MessageRecord> Messages { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public class AppDbContext : DbContext
     {
-        optionsBuilder.UseInMemoryDatabase("TelegramMessages");
+        public DbSet<MessageRecord> Messages { get; set; }
+
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
     }
 }

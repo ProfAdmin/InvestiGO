@@ -4,7 +4,7 @@ namespace TelegramBot.Models;
 
 public class MessageRecord
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public long ChatId { get; set; }
     public int MessageId { get; set; }
     public string? Text { get; set; }

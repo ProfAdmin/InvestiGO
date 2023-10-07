@@ -1,8 +1,28 @@
-﻿using TelegramBot;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using TelegramBot;
 using TelegramBot.Data;
 
-using var dbContext = new AppDbContext();
-var bot = new Bot("6571967465:AAFXuqGMd6b3a49PZg_PrpBF4i0-0qtgvfI", dbContext, -1001839414047);
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
+var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+
+using var dbContext = new AppDbContext(optionsBuilder.Options);
+
+// Automatically apply any pending migrations
+dbContext.Database.Migrate();
+
+var apiKey = configuration.GetSection("TelegramBot")["ApiKey"];
+if (string.IsNullOrEmpty(apiKey))
+{
+    Console.WriteLine("API Key could not be read or is empty in app-settings.json file");
+    return;
+}
+
+var bot = new Bot(apiKey, dbContext, -1001839414047);
 bot.Start();
 
 Console.WriteLine("Press any key to exit");
