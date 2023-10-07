@@ -1,0 +1,34 @@
+pr:
+  autoCancel: false
+  branches:
+    include:
+    - develop
+  drafts: false
+
+pool: 'Default'
+
+variables:
+  solution: ''
+  publishSolution: ''
+  projectName: ''
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
+
+steps:
+- task: NuGetToolInstaller@1
+  inputs:
+    # boolean. Always check for new versions. Default: false.
+    checkLatest: true
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet restore'
+  inputs:
+    command: 'restore'
+    projects: '$(solution)'
+    feedsToUse: 'select'
+    includeNuGetOrg: true
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '$(solution)'
