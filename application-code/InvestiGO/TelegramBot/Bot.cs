@@ -49,6 +49,10 @@ public class Bot
             {
                 await RegisterGroupAsync(update.Message.Chat.Id);
             }
+            else if (update.Message.Text?.StartsWith("/unregister") ?? false)
+            {
+                await UnregisterGroupAsync(update.Message.Chat.Id);
+            }
             else
             {
                 // Read the groupId from the chat message
@@ -95,12 +99,29 @@ public class Bot
                 IsActive = true,
             };
             _dbContext.Groups.Add(group);
-            await _dbContext.SaveChangesAsync();
-            await _botClient.SendTextMessageAsync(groupId, "Group registered successfully!");
         }
         else
         {
-            await _botClient.SendTextMessageAsync(groupId, "Group is already registered.");
+            existingGroup.IsActive = true;
+        }
+
+        await _dbContext.SaveChangesAsync();
+        await _botClient.SendTextMessageAsync(groupId, "Group registered successfully!");
+    }
+
+    private async Task UnregisterGroupAsync(long groupId)
+    {
+        var existingGroup = await _dbContext.Groups.FirstOrDefaultAsync(x => x.ChatId == groupId);
+
+        if (existingGroup != null)
+        {
+            existingGroup.IsActive = false;
+            await _dbContext.SaveChangesAsync();
+            await _botClient.SendTextMessageAsync(groupId, "Group unregistered successfully!");
+        }
+        else
+        {
+            await _botClient.SendTextMessageAsync(groupId, "Group is not registered.");
         }
     }
 }
