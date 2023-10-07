@@ -8,9 +8,7 @@ pr:
 pool: 'Default'
 
 variables:
-  solution: ''
-  publishSolution: ''
-  projectName: ''
+  solution: 'application-code/InvestiGO/InvestiGO.sln'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
 
