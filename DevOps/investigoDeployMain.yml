@@ -17,4 +17,4 @@ steps:
   inputs:
    repository: $(imageName)
    command: build
-   Dockerfile: application-code/InvestiGO/TelegramBot/Dockerfile
+   Dockerfile: application-code/InvestiGO/Dockerfile
