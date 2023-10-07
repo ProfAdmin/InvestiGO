@@ -3,6 +3,9 @@ pr:
   branches:
     include:
     - develop
+  paths:
+    include:
+    - application-code
   drafts: false
 
 pool: 'Default'
