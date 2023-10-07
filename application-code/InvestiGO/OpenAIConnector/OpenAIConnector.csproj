@@ -16,26 +16,19 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.11" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.11" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
-      <PackageReference Include="Telegram.Bot" Version="19.0.0" />
-      <PackageReference Include="Telegram.Bots.Extensions.AspNetCore" Version="5.9.0" />
-      <PackageReference Include="Telegram.Bots.Extensions.Polling" Version="5.9.0" />
+      <PackageReference Include="OpenAI-DotNet" Version="7.0.10" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <None Update="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
 </Project>

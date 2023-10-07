@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using TelegramBot.Data;
-using TelegramBot.Models;
 
 namespace TelegramBot;
 

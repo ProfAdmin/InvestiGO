@@ -1,6 +1,6 @@
 using Telegram.Bot.Types.Enums;
 
-namespace TelegramBot.Models;
+namespace Shared.Models;
 
 public class MessageRecord
 {
