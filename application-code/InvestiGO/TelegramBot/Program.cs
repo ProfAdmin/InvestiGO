@@ -15,14 +15,21 @@ using var dbContext = new AppDbContext(optionsBuilder.Options);
 // Automatically apply any pending migrations
 dbContext.Database.Migrate();
 
-var apiKey = configuration.GetSection("TelegramBot")["ApiKey"];
-if (string.IsNullOrEmpty(apiKey))
+var telegramApiKey = configuration.GetSection("TelegramBot")["ApiKey"];
+if (string.IsNullOrEmpty(telegramApiKey))
 {
-    Console.WriteLine("API Key could not be read or is empty in app-settings.json file");
+    Console.WriteLine("Telegram API Key could not be read or is empty in app-settings.json file");
     return;
 }
 
-var bot = new Bot(apiKey, dbContext);
+var openAIApiKey = configuration.GetSection("OpenAi")["ApiKey"];
+if (string.IsNullOrEmpty(openAIApiKey))
+{
+    Console.WriteLine("Open AI API Key could not be read or is empty in app-settings.json file");
+    return;
+}
+
+var bot = new Bot(telegramApiKey, openAIApiKey, dbContext);
 bot.Start();
 
 Console.WriteLine("Press any key to exit");

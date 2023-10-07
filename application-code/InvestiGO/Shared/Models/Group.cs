@@ -1,4 +1,4 @@
-namespace TelegramBot.Models;
+namespace Shared.Models;
 
 public class Group
 {

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TelegramBot.Models;
+using Shared.Models;
 
 namespace TelegramBot.Data
 {
