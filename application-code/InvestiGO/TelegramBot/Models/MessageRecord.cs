@@ -12,4 +12,5 @@ public class MessageRecord
     public long SenderId { get; set; }
     public string? SenderUsername { get; set; }
     public ChatType? SenderType { get; set; }
+    public int LastUpdateId { get; set; }
 }

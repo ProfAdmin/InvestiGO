@@ -22,7 +22,7 @@ if (string.IsNullOrEmpty(apiKey))
     return;
 }
 
-var bot = new Bot(apiKey, dbContext, -1001839414047);
+var bot = new Bot(apiKey, dbContext);
 bot.Start();
 
 Console.WriteLine("Press any key to exit");
