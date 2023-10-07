@@ -2,7 +2,7 @@ using OpenAI;
 using OpenAI.Chat;
 using Shared.Models;
 
-namespace OpenAIConnector.Services;
+namespace TelegramBot.Services;
 
 public class OpenAIService
 {
@@ -21,8 +21,8 @@ public class OpenAIService
 
         var messages = new List<Message>
         {
-            new(Role.System, "You are a helpful assistant."),
-            new(Role.User, "I will send you a list of messages from a telegram group chat. Your task is to read them all and give me a summary with the most important points. Each message will be separated from each other by the pipe character ( | )"),
+            new(Role.System, "You are a helpful assistant and an expert in summarizing"),
+            new(Role.User, "I will send you a list of messages from a telegram group chat. Your task is to read them all and give me a summary with the most important points. Each message will be separated from each other by the pipe character ( | )."),
             new(Role.User, concatenatedMessages)
         };
         

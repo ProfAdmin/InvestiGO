@@ -3,12 +3,14 @@ using Shared.Models;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using TelegramBot.Data;
+using TelegramBot.Services;
 
 namespace TelegramBot;
 
 public class Bot
 {
     private readonly TelegramBotClient _botClient;
+    private readonly OpenAIService _openAIService;
     private readonly AppDbContext _dbContext;
     private int _lastUpdateId;
     
@@ -16,9 +18,10 @@ public class Bot
     // ReSharper disable once NotAccessedField.Local
     private Timer _timer = null!;
 
-    public Bot(string apiKey, AppDbContext dbContext)
+    public Bot(string telegramApiKey, string openAiApiKey, AppDbContext dbContext)
     {
-        _botClient = new TelegramBotClient(apiKey);
+        _botClient = new TelegramBotClient(telegramApiKey);
+        _openAIService = new OpenAIService(openAiApiKey);
         _dbContext = dbContext;
     }
 
@@ -53,6 +56,10 @@ public class Bot
             {
                 await UnregisterGroupAsync(update.Message.Chat.Id);
             }
+            else if (update.Message.Text?.StartsWith("/summary") ?? false)
+            {
+                await SummaryGroupAsync(update.Message.Chat.Id);
+            }
             else
             {
                 // Read the groupId from the chat message
@@ -83,6 +90,17 @@ public class Bot
                 await _dbContext.SaveChangesAsync();
             }
         }
+    }
+
+    private async Task SummaryGroupAsync(long chatId)
+    {
+        var messages = await _dbContext.Messages
+            .Where(m => m.ChatId == chatId)
+            .ToListAsync();
+        
+        var summary = await _openAIService.GetSummary(messages);
+        
+        await _botClient.SendTextMessageAsync(chatId, summary);
     }
 
     private async Task RegisterGroupAsync(long groupId)
