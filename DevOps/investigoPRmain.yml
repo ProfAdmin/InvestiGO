@@ -2,10 +2,7 @@ pr:
   autoCancel: false
   branches:
     include:
-    - develop
-  paths:
-    include:
-    - application-code
+    - main
   drafts: false
 
 pool: 'Default'
