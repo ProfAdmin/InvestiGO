@@ -46,18 +46,20 @@ public class Bot
             _lastUpdateId = update.Id;
 
             if (update.Message == null) continue;
+
+            var command = update.Message.Text; 
                 
-            if (update.Message.Text?.StartsWith("/register") ?? false)
+            if (command?.StartsWith("/register") ?? false)
             {
                 await RegisterGroupAsync(update.Message.Chat.Id);
             }
-            else if (update.Message.Text?.StartsWith("/unregister") ?? false)
+            else if (command?.StartsWith("/unregister") ?? false)
             {
                 await UnregisterGroupAsync(update.Message.Chat.Id);
             }
-            else if (update.Message.Text?.StartsWith("/summary") ?? false)
+            else if (command?.StartsWith("/summary") ?? false)
             {
-                await SummaryGroupAsync(update.Message.Chat.Id);
+                await SummaryGroupAsync(command, update.Message.Chat.Id);
             }
             else
             {
@@ -93,8 +95,10 @@ public class Bot
         }
     }
 
-    private async Task SummaryGroupAsync(long chatId)
+    private async Task SummaryGroupAsync(string command, long chatId)
     {
+        // work in progress
+        
         var messages = await _dbContext.Messages
             .Where(m => m.ChatId == chatId)
             .ToListAsync();
@@ -102,6 +106,17 @@ public class Bot
         var summary = await _openAIService.GetSummary(messages);
         
         await _botClient.SendTextMessageAsync(chatId, summary);
+    }
+    
+    private async Task<int> GetMessageCountFromTodayAsync(long chatId)
+    {
+        // Get today's date at 00:00 UTC
+        DateTime todayUtc = DateTime.UtcNow.Date;
+
+        // Get the number of messages from today
+        return await _dbContext.Messages
+            .Where(m => m.ChatId == chatId && m.Date >= todayUtc)
+            .CountAsync();
     }
 
     private async Task RegisterGroupAsync(long groupId)
