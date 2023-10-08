@@ -60,7 +60,11 @@ public class Bot
             }
             else if (command?.StartsWith("/summary") ?? false)
             {
-                await SummaryGroupAsync(command, update.Message.Chat.Id);
+                await GetSummaryAsync(command, update.Message.Chat.Id);
+            }
+            else if (command?.StartsWith("/thread") ?? false)
+            {
+                await GetThreadsSummaryAsync(update.Message.Chat.Id);
             }
             else
             {
@@ -96,9 +100,10 @@ public class Bot
         }
     }
 
-    private async Task SummaryGroupAsync(string command, long chatId)
+    private async Task GetSummaryAsync(string command, long chatId)
     {
-        await _botClient.SendTextMessageAsync(chatId, "Turning verbosity into brevity... Please wait some seconds!");
+        await _botClient.SendTextMessageAsync(chatId, 
+            "Turning verbosity into brevity... Please wait some seconds!");
         
         int numberOfMessagesToSummarize;
 
@@ -154,7 +159,7 @@ public class Bot
             return existingSummary.SummaryText ?? string.Empty;
 
         var messages = await _dbContext.Messages
-            .Where(m => m.ChatId == chatId && m.MessageId > firstMessageId)
+            .Where(m => m.ChatId == chatId && m.MessageId >= firstMessageId)
             .OrderBy(m => m.MessageId)
             .Take(count)
             .ToListAsync();
@@ -231,4 +236,56 @@ public class Bot
             await _botClient.SendTextMessageAsync(groupId, "Group is not registered.");
         }
     }
+    
+    private async Task GetThreadsSummaryAsync(long chatId)
+    {
+        await _botClient.SendTextMessageAsync(chatId, "Unraveling the thread of discourse... hang tight!");
+
+        var todayUtc = DateTime.UtcNow.Date;
+
+        // Fetch all messages for this ChatId that are threads and group them by ThreadId 
+        var messages = await _dbContext.Messages
+            .Where(x => x.ChatId == chatId && x.ThreadId != 0 && x.Date >= todayUtc)
+            .ToListAsync();
+
+        var groupedMessages = messages.GroupBy(x => x.ThreadId);
+
+        // For each group, create a list of MessageRecord and add it to the allThreads list
+        var allThreads = new List<List<MessageRecord>>();
+        var groupedMessagesList = groupedMessages.ToList();
+
+        foreach (var group in groupedMessagesList)
+        {
+            allThreads.Add(group.ToList());
+        }
+
+        // Summarize every thread
+        int i = 1;
+
+        foreach (var messageList in allThreads)
+        {
+            // Skip the current iteration and move on to the next one if less than 3 messages on thread
+            if (messageList.Count < 3) continue;
+            
+            var summary = await _openAIService.GetSummary(messageList);
+
+            var chatThread = new ChatThreads
+            {
+                Id = Guid.NewGuid(),
+                MessageThreadId = messageList[0].ThreadId,
+                ThreadSummary = summary
+            };
+
+            _dbContext.ChatThreads.Add(chatThread);
+
+            var formattedSummary = $"Thread {i} :\n {summary}";
+            i++;
+
+            await _botClient.SendTextMessageAsync(chatId, formattedSummary);
+        }
+
+        // Save the chat threads to the database
+        await _dbContext.SaveChangesAsync();
+    }
+
 }
