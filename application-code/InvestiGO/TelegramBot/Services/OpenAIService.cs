@@ -31,4 +31,13 @@ public class OpenAIService
         
         return result;
     }
+
+    /*public async Task<string> GetThread(List<List<MessageRecord> allThread)
+    {
+        var api = new OpenAIClient(_apiKey);
+
+        string concatenatedMessages;
+        
+        return 
+    }*/
 }

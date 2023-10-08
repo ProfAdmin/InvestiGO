@@ -61,6 +61,10 @@ public class Bot
             {
                 await SummaryGroupAsync(command, update.Message.Chat.Id);
             }
+            else if (command?.StartsWith("/thread") ?? false)
+            {
+                await ThreadGroupAsync(command, update.Message.Chat.Id);
+            }
             else
             {
                 // Read the groupId from the chat message
@@ -106,6 +110,26 @@ public class Bot
         var summary = await _openAIService.GetSummary(messages);
         
         await _botClient.SendTextMessageAsync(chatId, summary);
+    }
+
+    private async Task ThreadGroupAsync(string command, long chatId)
+    {
+        var messages = await _dbContext.Messages
+            .Where(item => item.ChatId == chatId)
+            .GroupBy(item => item.ThreadId)
+            .Where(g => g.Count() > 1).ToListAsync();
+
+        List<List<MessageRecord>> allThread = new List<List<MessageRecord>>();
+
+        foreach (var thread in messages)
+        {
+            List<MessageRecord> currentThreadList = new List<MessageRecord>();
+            foreach (var item in currentThreadList)
+            {
+                currentThreadList.Add(item);
+            }
+            allThread.Add(currentThreadList);
+        }
     }
     
     private async Task<int> GetMessageCountFromTodayAsync(long chatId)
