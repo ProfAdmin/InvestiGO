@@ -68,9 +68,12 @@ public class Bot
                 // Get the group from DB making sure it is active
                 var group = await _dbContext.Groups
                     .FirstOrDefaultAsync(x => x.ChatId == groupId && x.IsActive);
-                    
+                
+                string? messageText;
+                messageText = update.Message.Text ?? update.Message.Caption;
+                
                 // Ignore messages that are not text, or when the group is not registered
-                if (group == null || update.Message.Type != MessageType.Text) continue;
+                if (group == null || messageText == null) continue;
 
                 // Store the message in DB if the group is registered
                 var messageRecord = new MessageRecord
@@ -78,7 +81,7 @@ public class Bot
                     Id = Guid.NewGuid(),
                     ChatId = groupId,
                     MessageId = update.Message.MessageId,
-                    Text = update.Message.Text,
+                    Text = messageText,
                     Date = update.Message.Date,
                     LastUpdateId = _lastUpdateId,
                     SenderId = update.Message.SenderChat?.Id ?? 0,
