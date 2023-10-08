@@ -62,6 +62,10 @@ public class Bot
             {
                 await SummaryGroupAsync(command, update.Message.Chat.Id);
             }
+            else if (command?.StartsWith("/thread") ?? false)
+            {
+                await ThreadGroupAsync(command, update.Message.Chat.Id);
+            }
             else
             {
                 // Read the groupId from the chat message
