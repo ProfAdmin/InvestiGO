@@ -399,4 +399,4 @@ FodyWeavers.xsd
 .idea/
 /application-code/InvestiGO/.idea/
 **/.idea/**
-appsettings.json
+**/appsettings.json
