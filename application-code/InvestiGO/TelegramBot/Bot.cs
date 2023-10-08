@@ -1,14 +1,15 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Telegram.Bot;
-using Telegram.Bot.Types.Enums;
 using TelegramBot.Data;
-using TelegramBot.Models;
+using TelegramBot.Services;
 
 namespace TelegramBot;
 
 public class Bot
 {
     private readonly TelegramBotClient _botClient;
+    private readonly OpenAIService _openAIService;
     private readonly AppDbContext _dbContext;
     private int _lastUpdateId;
     
@@ -16,9 +17,10 @@ public class Bot
     // ReSharper disable once NotAccessedField.Local
     private Timer _timer = null!;
 
-    public Bot(string apiKey, AppDbContext dbContext)
+    public Bot(string telegramApiKey, string openAiApiKey, AppDbContext dbContext)
     {
-        _botClient = new TelegramBotClient(apiKey);
+        _botClient = new TelegramBotClient(telegramApiKey);
+        _openAIService = new OpenAIService(openAiApiKey);
         _dbContext = dbContext;
     }
 
@@ -53,6 +55,10 @@ public class Bot
             {
                 await UnregisterGroupAsync(update.Message.Chat.Id);
             }
+            else if (update.Message.Text?.StartsWith("/summary") ?? false)
+            {
+                await SummaryGroupAsync(update.Message.Chat.Id);
+            }
             else
             {
                 // Read the groupId from the chat message
@@ -61,9 +67,11 @@ public class Bot
                 // Get the group from DB making sure it is active
                 var group = await _dbContext.Groups
                     .FirstOrDefaultAsync(x => x.ChatId == groupId && x.IsActive);
-                    
-                // Ignore messages that are not text, or when the group is not registered
-                if (group == null || update.Message.Type != MessageType.Text) continue;
+
+                string? messageText = update.Message.Text ?? update.Message.Caption;
+
+                // Ignore messages that don't have text, or when the group is not registered
+                if (group == null || messageText == null) continue;
 
                 // Store the message in DB if the group is registered
                 var messageRecord = new MessageRecord
@@ -71,18 +79,29 @@ public class Bot
                     Id = Guid.NewGuid(),
                     ChatId = groupId,
                     MessageId = update.Message.MessageId,
-                    Text = update.Message.Text,
+                    Text = messageText,
                     Date = update.Message.Date,
                     LastUpdateId = _lastUpdateId,
-                    SenderId = update.Message.SenderChat?.Id ?? 0,
-                    SenderUsername = update.Message.SenderChat?.Username ?? string.Empty,
-                    SenderType = update.Message.SenderChat?.Type ?? null
+                    SenderId = update.Message.From?.Id ?? 0,
+                    SenderUsername = update.Message.From?.Username ?? string.Empty,
+                    ThreadId = update.Message.MessageThreadId ?? 0,
                 };
 
                 _dbContext.Messages.Add(messageRecord);
                 await _dbContext.SaveChangesAsync();
             }
         }
+    }
+
+    private async Task SummaryGroupAsync(long chatId)
+    {
+        var messages = await _dbContext.Messages
+            .Where(m => m.ChatId == chatId)
+            .ToListAsync();
+        
+        var summary = await _openAIService.GetSummary(messages);
+        
+        await _botClient.SendTextMessageAsync(chatId, summary);
     }
 
     private async Task RegisterGroupAsync(long groupId)
