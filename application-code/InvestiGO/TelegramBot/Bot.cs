@@ -12,6 +12,7 @@ public class Bot
     private readonly OpenAIService _openAIService;
     private readonly AppDbContext _dbContext;
     private int _lastUpdateId;
+    private string? _summaryHeadline;
     
     // Even though this is not used, we need this variable alive for our poll mechanism
     // ReSharper disable once NotAccessedField.Local
@@ -97,17 +98,89 @@ public class Bot
 
     private async Task SummaryGroupAsync(string command, long chatId)
     {
-        // work in progress
+        await _botClient.SendTextMessageAsync(chatId, "Turning verbosity into brevity... Please wait some seconds!");
         
-        var messages = await _dbContext.Messages
+        int numberOfMessagesToSummarize;
+
+        if (command.StartsWith("/summary "))
+        {
+            // Remove "/summary " from the command
+            var numberString = command.Replace("/summary ", "");
+
+            // Try to parse the remaining string as an integer
+            // If the parsing is successful, set the number of messages to summarize to the parsed integer
+            // If the parsing fails, get the number of messages from today
+            if (int.TryParse(numberString, out var number))
+            {
+                _summaryHeadline = $"Summary for the last {number} messages:";
+                numberOfMessagesToSummarize = number;
+            }
+            else
+            {
+                _summaryHeadline = "Summary for all the messages of today:";
+                numberOfMessagesToSummarize = await GetMessageCountFromTodayAsync(chatId);
+            }
+        }
+        else
+        {
+            // If the command is "/summary", get the number of messages from today
+            _summaryHeadline = "Summary for all the messages of today:";
+            numberOfMessagesToSummarize = await GetMessageCountFromTodayAsync(chatId);
+        }
+
+        var firstMessageId = await _dbContext.Messages
             .Where(m => m.ChatId == chatId)
-            .ToListAsync();
+            .OrderByDescending(m => m.MessageId)
+            .Skip(numberOfMessagesToSummarize - 1)
+            .Select(m => m.MessageId)
+            .FirstOrDefaultAsync();
+
+        var summary = await GetSummaryAsync(firstMessageId, numberOfMessagesToSummarize, chatId);
+
+        var formattedSummary = $"{_summaryHeadline}\n\n {summary}";
         
-        var summary = await _openAIService.GetSummary(messages);
-        
-        await _botClient.SendTextMessageAsync(chatId, summary);
+        await _botClient.SendTextMessageAsync(chatId, formattedSummary);
     }
-    
+
+    private async Task<string> GetSummaryAsync(int firstMessageId, int count, long chatId)
+    {
+        var existingSummary = await _dbContext.Summaries
+            .Where(x => x.FirstMessageId == firstMessageId
+                        && x.MessagesCount == count)
+            .FirstOrDefaultAsync();
+
+        // If we already found a summary in our Database, no need to call GPT at all
+        if (existingSummary != null) 
+            return existingSummary.SummaryText ?? string.Empty;
+
+        var messages = await _dbContext.Messages
+            .Where(m => m.ChatId == chatId && m.MessageId > firstMessageId)
+            .OrderBy(m => m.MessageId)
+            .Take(count)
+            .ToListAsync();
+
+        var summary = await _openAIService.GetSummary(messages);
+
+        await StoreSummaryInDb(firstMessageId, count, chatId, summary);
+
+        return summary;
+    }
+
+    private async Task StoreSummaryInDb(int firstMessageId, int count, long chatId, string summary)
+    {
+        var newSummary = new Summary
+        {
+            Id = Guid.NewGuid(),
+            ChatId = chatId,
+            SummaryText = summary,
+            FirstMessageId = firstMessageId,
+            MessagesCount = count
+        };
+
+        _dbContext.Summaries.Add(newSummary);
+        await _dbContext.SaveChangesAsync();
+    }
+
     private async Task<int> GetMessageCountFromTodayAsync(long chatId)
     {
         // Get today's date at 00:00 UTC
