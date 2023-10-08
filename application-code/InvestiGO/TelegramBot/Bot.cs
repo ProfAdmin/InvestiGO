@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Telegram.Bot;
-using Telegram.Bot.Types.Enums;
 using TelegramBot.Data;
 using TelegramBot.Services;
 
@@ -68,11 +67,10 @@ public class Bot
                 // Get the group from DB making sure it is active
                 var group = await _dbContext.Groups
                     .FirstOrDefaultAsync(x => x.ChatId == groupId && x.IsActive);
-                
-                string? messageText;
-                messageText = update.Message.Text ?? update.Message.Caption;
-                
-                // Ignore messages that are not text, or when the group is not registered
+
+                string? messageText = update.Message.Text ?? update.Message.Caption;
+
+                // Ignore messages that don't have text, or when the group is not registered
                 if (group == null || messageText == null) continue;
 
                 // Store the message in DB if the group is registered
@@ -84,9 +82,9 @@ public class Bot
                     Text = messageText,
                     Date = update.Message.Date,
                     LastUpdateId = _lastUpdateId,
-                    SenderId = update.Message.SenderChat?.Id ?? 0,
-                    SenderUsername = update.Message.SenderChat?.Username ?? string.Empty,
-                    SenderType = update.Message.SenderChat?.Type ?? null
+                    SenderId = update.Message.From?.Id ?? 0,
+                    SenderUsername = update.Message.From?.Username ?? string.Empty,
+                    ThreadId = update.Message.MessageThreadId ?? 0,
                 };
 
                 _dbContext.Messages.Add(messageRecord);
